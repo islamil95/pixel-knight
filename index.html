@@ -15,7 +15,7 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
 }
 
@@ -23,6 +23,12 @@ canvas {
     image-rendering: pixelated;
     border: 2px solid #444;
     box-shadow: 0 0 20px rgba(0,0,0,0.6);
+
+    /* 🔑 Адаптив */
+    max-width: 100vw;
+    max-height: 100vh;
+    width: auto;
+    height: auto;
 }
 
 #ui {
@@ -58,6 +64,10 @@ canvas {
     align-items: center;
     justify-content: center;
     font-size: 22px;
+    user-select: none;
+}
+.btn:active {
+    background: rgba(255,255,255,0.3);
 }
 @media (hover: none) {
     #controls { display: flex; }
@@ -83,15 +93,8 @@ canvas {
 </div>
 
 <script>
-/*
-Pixel Knight — pixel-art игра.
-Игрок управляет рыцарем, который исследует подземелье
-и собирает все монеты, чтобы завершить уровень.
-*/
-
 // ================== CONFIG ==================
 const TILE = 32;
-const SCALE = 2;
 const MAP_W = 10;
 const MAP_H = 10;
 
@@ -162,9 +165,8 @@ document.getElementById('total').textContent = coins.length;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-canvas.width = MAP_W * TILE * SCALE;
-canvas.height = MAP_H * TILE * SCALE;
-ctx.scale(SCALE, SCALE);
+canvas.width = MAP_W * TILE;
+canvas.height = MAP_H * TILE;
 
 // ================== GAME LOOP ==================
 function start() {
@@ -208,20 +210,7 @@ function draw() {
     coins.forEach(c => {
         if (!c.taken) {
             const oy = Math.sin(t) * 2;
-            if (assets.coin.complete && assets.coin.naturalWidth) {
-                ctx.drawImage(
-                    assets.coin,
-                    c.x*TILE+4,
-                    c.y*TILE+4+oy,
-                    TILE-8,
-                    TILE-8
-                );
-            } else {
-                ctx.fillStyle = 'gold';
-                ctx.beginPath();
-                ctx.arc(c.x*TILE+16, c.y*TILE+16+oy, 10, 0, Math.PI*2);
-                ctx.fill();
-            }
+            drawTile(assets.coin, c.x, c.y + oy / TILE, 'gold');
         }
     });
 
