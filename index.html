@@ -2,7 +2,8 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Pixel Knight</title>
 
 <style>
@@ -24,7 +25,7 @@ canvas {
     border: 2px solid #444;
     box-shadow: 0 0 20px rgba(0,0,0,0.6);
 
-    /* 🔑 Адаптив */
+    /* Адаптив */
     max-width: 100vw;
     max-height: 100vh;
     width: auto;
@@ -48,12 +49,17 @@ canvas {
     display: none;
 }
 
-/* Мобильные кнопки */
+/* ================= MOBILE CONTROLS ================= */
 #controls {
     display: none;
     gap: 10px;
     margin-top: 16px;
 }
+
+body.touch #controls {
+    display: flex;
+}
+
 .btn {
     width: 56px;
     height: 56px;
@@ -65,12 +71,11 @@ canvas {
     justify-content: center;
     font-size: 22px;
     user-select: none;
+    touch-action: none;
 }
+
 .btn:active {
     background: rgba(255,255,255,0.3);
-}
-@media (hover: none) {
-    #controls { display: flex; }
 }
 </style>
 </head>
@@ -93,6 +98,11 @@ canvas {
 </div>
 
 <script>
+// ================== TOUCH DETECTION ==================
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    document.body.classList.add('touch');
+}
+
 // ================== CONFIG ==================
 const TILE = 32;
 const MAP_W = 10;
@@ -189,18 +199,18 @@ function update() {
 
 function drawTile(img, x, y, color) {
     if (img.complete && img.naturalWidth) {
-        ctx.drawImage(img, x*TILE, y*TILE, TILE, TILE);
+        ctx.drawImage(img, x * TILE, y * TILE, TILE, TILE);
     } else {
         ctx.fillStyle = color;
-        ctx.fillRect(x*TILE, y*TILE, TILE, TILE);
+        ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
     }
 }
 
 function draw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (let y=0;y<MAP_H;y++) {
-        for (let x=0;x<MAP_W;x++) {
+    for (let y = 0; y < MAP_H; y++) {
+        for (let x = 0; x < MAP_W; x++) {
             drawTile(assets.grass, x, y, '#2d5a27');
             if (map[y][x] === 1) drawTile(assets.wall, x, y, '#777');
         }
@@ -223,6 +233,13 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
+// ================== VIBRATION ==================
+function vibrate(ms = 30) {
+    if (navigator.vibrate) {
+        navigator.vibrate(ms);
+    }
+}
+
 // ================== CONTROL ==================
 function move(dx, dy) {
     if (player.moving || gameState !== GameState.PLAY) return;
@@ -230,7 +247,7 @@ function move(dx, dy) {
     const nx = player.x + dx;
     const ny = player.y + dy;
 
-    if (nx<0 || ny<0 || nx>=MAP_W || ny>=MAP_H) return;
+    if (nx < 0 || ny < 0 || nx >= MAP_W || ny >= MAP_H) return;
     if (map[ny][nx] === 1) return;
 
     player.x = nx;
@@ -240,29 +257,35 @@ function move(dx, dy) {
     player.moving = true;
 
     coins.forEach(c => {
-        if (!c.taken && c.x===nx && c.y===ny) {
+        if (!c.taken && c.x === nx && c.y === ny) {
             c.taken = true;
             score++;
             document.getElementById('score').textContent = score;
+
+            vibrate(40); // 🔥 ВИБРАЦИЯ ПРИ СБОРЕ МОНЕТЫ
+
             if (score === coins.length) {
                 gameState = GameState.WIN;
                 document.getElementById('message').style.display = 'block';
+                vibrate([100, 50, 100]); // 🎉 победная вибрация
             }
         }
     });
 }
 
+// Keyboard
 window.addEventListener('keydown', e => {
-    if (e.key==='ArrowUp' || e.key==='w') move(0,-1);
-    if (e.key==='ArrowDown' || e.key==='s') move(0,1);
-    if (e.key==='ArrowLeft' || e.key==='a') move(-1,0);
-    if (e.key==='ArrowRight' || e.key==='d') move(1,0);
+    if (e.key === 'ArrowUp' || e.key === 'w') move(0, -1);
+    if (e.key === 'ArrowDown' || e.key === 's') move(0, 1);
+    if (e.key === 'ArrowLeft' || e.key === 'a') move(-1, 0);
+    if (e.key === 'ArrowRight' || e.key === 'd') move(1, 0);
 });
 
-left.onclick  = ()=>move(-1,0);
-right.onclick = ()=>move(1,0);
-up.onclick    = ()=>move(0,-1);
-down.onclick  = ()=>move(0,1);
+// Touch buttons
+left.ontouchstart  = () => move(-1, 0);
+right.ontouchstart = () => move(1, 0);
+up.ontouchstart    = () => move(0, -1);
+down.ontouchstart  = () => move(0, 1);
 </script>
 
 </body>
